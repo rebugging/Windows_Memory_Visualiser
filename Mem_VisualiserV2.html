@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Animated Memory Visualizer</title>
+<style>
+  body { font-family: monospace; background: #111; color: #eee; padding: 20px; }
+  #memory { display: flex; flex-wrap: wrap; align-items: flex-end; height: 400px; border: 1px solid #555; padding: 10px; }
+  .block {
+    margin: 1px;
+    background: #4caf50;
+    width: 30px;
+    display: inline-block;
+    vertical-align: bottom;
+    transition: height 0.5s, background 0.5s;
+    color: #111;
+    font-size: 10px;
+    text-align: center;
+  }
+  .free { background: #f44336; }
+</style>
+</head>
+<body>
+<h1>Animated Live Memory Visualizer</h1>
+<div id="memory"></div>
+
+<script>
+let blockMap = new Map();
+
+async function fetchMemory() {
+    try {
+        const response = await fetch('memory_log.json');
+        const data = await response.json();
+        return data;
+    } catch (e) {
+        console.error('Failed to fetch memory:', e);
+        return [];
+    }
+}
+
+function visualize(blocks) {
+    const container = document.getElementById('memory');
+
+    // Track existing addresses
+    const newMap = new Map();
+
+    blocks.forEach(b => {
+        let div = blockMap.get(b.addr);
+        if (!div) {
+            div = document.createElement('div');
+            div.className = 'block';
+            div.title = `${b.size}B @ ${b.addr}`;
+            div.textContent = b.size;
+            container.appendChild(div);
+        }
+
+        div.style.height = `${b.size * 3}px`; // scale factor for visibility
+        div.className = 'block ' + (b.free ? 'free' : 'used');
+
+        newMap.set(b.addr, div);
+    });
+
+    // Remove blocks that no longer exist
+    blockMap.forEach((div, addr) => {
+        if (!newMap.has(addr)) {
+            div.remove();
+        }
+    });
+
+    blockMap = newMap;
+}
+
+async function updateLoop() {
+    const blocks = await fetchMemory();
+    visualize(blocks);
+    setTimeout(updateLoop, 1000); // update every second
+}
+
+updateLoop();
+</script>
+</body>
+</html>
