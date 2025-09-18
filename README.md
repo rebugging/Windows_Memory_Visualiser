@@ -92,6 +92,6 @@ Licence:
 --------
 This is provided for educational purposes. Use at your own risk.
 
-=============================
+
 End of README
 =============================
